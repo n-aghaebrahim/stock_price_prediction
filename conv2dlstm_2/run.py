@@ -1,3 +1,4 @@
+# Import necessary libraries and modules
 import os
 import json
 import math
@@ -9,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import yfinance as yf
 
+# Additional imports
 from numpy import array
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -17,16 +19,16 @@ from datetime import date, timedelta, datetime
 from keras.preprocessing.sequence import TimeseriesGenerator
 from contextlib import redirect_stdout
 
+# Custom module imports
 from indicators import INDICATOR
-import decision 
+import decision
 import config_run
 import train_predict
 import model_desing
 import data_gen
 
 
-
-
+# Main function
 def main(
     stock_name: str=None, 
     epochs_num: int=None,
@@ -65,14 +67,17 @@ def main(
     lstm_layer_dict: dict=None,
 ):
 
-
+    # Initialize a dictionary to store prediction results
     prediction_result = {}
     
+    # Loop through each value of n_steps
     for s in n_steps:
+        # Check if training is required and create a folder for logs
         if train_condition:
             if not os.path.exists(f"logs/{stock_name}/{date_info}/{time}/seq_{s}"):
                 os.makedirs(f"logs/{stock_name}/{date_info}/{time}/seq_{s}")
         
+            # Create an info.txt file and write general information to it
             with open(f"logs/{stock_name}/{date_info}/{time}/seq_{s}/info.txt", "w") as filet:
                 filet.write("----------------------------\n")
                 filet.write("general information\n")
@@ -80,15 +85,17 @@ def main(
                 filet.write(f"stock name: {stock_name}\n")
                 filet.write(f"number of train epochs: {epochs_num}\n")
                 filet.write(f"number of features: {n_features}\n")
-                filet.write(f"the sequqnces that trained on at this time: {n_steps}\n")
+                filet.write(f"the sequences that trained on at this time: {n_steps}\n")
 
+        # Print a message for the current sequence
         print(
             f"\n\n\n\n\n********************* run for the sequence of {s} *************************"
         )
-        # call the function to get the data
+
+        # Call the function to get the data for the current sequence
         stock_data, values_all_a = data_gen.get_data(stock_name, date_info, time, train_condition)
 
-        # preparing the train and test data set
+        # Prepare the train and test datasets
         (
             X_train,
             y_train,
@@ -116,8 +123,7 @@ def main(
             validation_split_update
         )
         
-        
-        # initializing the model
+        # Initialize the model based on the provided configurations
         model = model_desing.MODEL(
             s,
             n_features,
@@ -136,7 +142,7 @@ def main(
             train_condition
         )
 
-        # Train the model
+        # Train the model and obtain the updated model
         model = train_predict.model_train(
             stock_name,
             model,
@@ -166,28 +172,29 @@ def main(
             validation_split_update
         )
 
-        # Predict on trained model
+        # Predict on the trained model and store the results in prediction_result
         print("\n############################################")
         print(f"prediction result for sequence of {s}......")
         print("############################################")
         result = train_predict.prediction(
             model, scaled_predict, y_predict, stock_data, ypscaler
         )
-
         prediction_result[s] = result
 
+    # Print the target value (df_target) and make a decision based on prediction results
     print("\n\n##########################################")
     print("         the target value        ")
     print("##########################################\n")
     print(df_target)
-
     decision.make_decision(prediction_result)
 
+    # Print the prediction results for each sequence
     for k, v in prediction_result.items():
-        print(f"\n\nthe result for the sequecnce {k} is:\n")
+        print(f"\n\nthe result for the sequence {k} is:\n")
         print(v.tail())
 
 
+# Call the main function with the provided configurations from config_run module
 main(
     stock_name = config_run.STOCK_NAME, 
     epochs_num = config_run.EPOCH_NUM,
