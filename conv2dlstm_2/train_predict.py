@@ -1,3 +1,4 @@
+# Import necessary libraries
 import os
 import json
 import math
@@ -16,13 +17,11 @@ from keras.preprocessing.sequence import TimeseriesGenerator
 from contextlib import redirect_stdout
 pd.options.mode.chained_assignment = None
 
+# Import custom modules
 import plot
 from indicators import INDICATOR
 
-
-
-
-
+# Function to train the model and perform predictions
 def model_train(symbol, 
                 model, 
                 x_train, 
@@ -50,33 +49,37 @@ def model_train(symbol,
                 n_update_epoch,
                 validation_split_update):
 
-        
+    # Update the model with new data
     if update_condition:
         print("\n####################################################")
-        print(f"start to updata model for sequence of {s}.....")
+        print(f"start to update model for sequence of {s}.....")
         print("####################################################")
         if best_weight_update and not use_update_weight_update:
             bp = 'best_'
-
         else:
             bp = ''
 
         if use_update_weight_update and not best_weight_update:
             up = '_updated_{n_update_epoch}'
-
         else:
             up = ''
+
+        # Load the pre-trained weights for the model
         model.load_weights(f'logs/{stock_name}/{predict_date}/{predict_time}/seq_{s}/weights/{bp}weight{up}_epoch_{epochs}.h5')
         print('pre weights are loaded...')
-        model.compile(optimizer= tf.keras.optimizers.lagacy.Adam(learning_rate = learning_rate_update) , loss='mse', metrics = ['accuracy'])
-        print('update the model with the new data')
-        history = model.fit(x_train, y_train, epochs=n_update_epoch, validation_split = validation_split_update, shuffle=False, batch_size= batch_size)
 
-        # plot the training history
+        # Compile the model with the new learning rate for update
+        model.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate_update), loss='mse', metrics=['accuracy'])
+        print('update the model with the new data')
+
+        # Train the model with the new data for a specified number of epochs
+        history = model.fit(x_train, y_train, epochs=n_update_epoch, validation_split=validation_split_update, shuffle=False, batch_size=batch_size)
+
+        # Plot the training history and save the updated model weights
         plot.plot_fig(history, s, stock_name, date_info, time, update_condition, predict_date, predict_time, n_update_epoch)
         model.save(f'logs/{stock_name}/{predict_date}/{predict_time}/seq_{s}/weights/weight_updated_{n_update_epoch}_epoch_{epochs}.h5')
 
-    #elif os.path.isfile(f'{symbol}_weights/weight_10.h5'):
+    # If predict_condition is true, load pre-trained weights for prediction
     if predict_condition:
         print("\n####################################################")
         print(f"start to make prediction for sequence of {s}.....")
@@ -85,38 +88,38 @@ def model_train(symbol,
             bp = 'best_' 
         else:
             bp = ''
-        model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate = learning_rate) , loss='mse', metrics = ['accuracy'])
-        print(f'logs/{stock_name}/{predict_date}/{predict_time}/seq_{s}/weights/{bp}weight_{predict_weight}epoch_{epochs}.h5') 
-        model.load_weights(f'logs/{stock_name}/{predict_date}/{predict_time}/seq_{s}/weights/{bp}weight_{predict_weight}epoch_{epochs}.h5') 
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse', metrics=['accuracy'])
+        model.load_weights(f'logs/{stock_name}/{predict_date}/{predict_time}/seq_{s}/weights/{bp}weight_{predict_weight}epoch_{epochs}.h5')
         print('pre weights are loaded...')
 
+    # If train_condition is true, train the model from scratch
     if train_condition:
         print("\n####################################################")
         print(f"start to train model for sequence of {s}.....")
         print("####################################################")
-        model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate = learning_rate) , loss='mse', metrics = ['accuracy'])
- 
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse', metrics=['accuracy'])
+
+        # Create folders to save model weights and history if they don't exist
         if not os.path.exists(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/weights'):
             os.makedirs(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/weights')         
 
+        # Define a callback to save the best weights based on validation loss
         checkpoint_path = f'logs/{stock_name}/{date_info}/{time}/seq_{s}/weights/best_weight_epoch_{epochs}.h5'
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-                                                                    filepath=checkpoint_path,
-                                                                    save_weights_only=True,
-                                                                    monitor='val_loss',
-                                                                    mode='min',
-                                                                    save_best_only=True)
+            filepath=checkpoint_path,
+            save_weights_only=True,
+            monitor='val_loss',
+            mode='min',
+            save_best_only=True
+        )
 
-        #print(x_train.shape)
-        #exit()
-        #x_train = x_train.reshape((x_train.shape[0],1,x_train.shape[1],x_train.shape[2], x_train.shape[3]))
-        #print(x_train)
-        history = model.fit(x_train, y_train, shuffle=False, validation_split= validation_split, epochs=epochs, batch_size=batch_size, callbacks=[model_checkpoint_callback])
+        # Train the model with the provided data and configuration
+        history = model.fit(x_train, y_train, shuffle=False, validation_split=validation_split, epochs=epochs, batch_size=batch_size, callbacks=[model_checkpoint_callback])
 
-        # plot the training history
+        # Plot the training history and save the model weights
         plot.plot_fig(history, s, stock_name, date_info, time, update_condition, predict_date, predict_time, n_update_epoch)
-        
-        # reading the training history and save it to .json file
+
+        # Convert the history to a dictionary and save it to a JSON file
         new_dict = {}
         for k, v in history.history.items():
             for i in range(len(v)):    
@@ -124,12 +127,12 @@ def model_train(symbol,
 
         for k, v in history.history.items():
             for i in range(len(v)):
-            #for k, v in history.history.items():
-                    new_dict[i][k] = v[i]
+                new_dict[i][k] = v[i]
 
         with open(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/train_result.json', 'w') as tr:
             json.dump(new_dict, tr, indent=4)
-            
+
+        # Evaluate the model on the test data and save the results to a text file
         print('\n------------------------------------')
         print('evaluate the model on the test data:')
         print('------------------------------------')
@@ -144,29 +147,28 @@ def model_train(symbol,
             filet.write(f'the loss on test set is: {e[0]}\n')
             filet.write(f'the accuracy on test set is: {e[1]}\n')
 
+        # Save the model weights
         if not os.path.exists(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/weights'):
             os.makedirs(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/weights')  
 
         model.save(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/weights/weight_epoch_{epochs}.h5')
 
+        # Save the model in its entirety
         if not os.path.exists(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/models'):
             os.makedirs(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/models')
 
         model.save(f'logs/{stock_name}/{date_info}/{time}/seq_{s}/models/model_{epochs}')
+
     return model
 
-
-
-#def prediction(model, x_test, y_test, scaler, stock_data, training_data_len):
+# Function to perform prediction using the trained model
 def prediction(model, scaled_predict, y_predict, stock_data, ypscaler):
     y_pred_scaled = model.predict(scaled_predict)
     y_pred = ypscaler.inverse_transform(y_pred_scaled)
     
-    print(len(y_pred))
-
-    df = pd.DataFrame(y_pred, columns = ['Open', 'High', 'Low', 'Close'])#, 'Volume', 'ewm5', 'ewm10'])#, 'Adj Close', 'Volume', 'ewm5', 'ewm10', 'ewm20', 'ewm50', 'ewm200', 'macd', 'k', 'd'])  
+    # Convert the predicted values back to the original scale using the inverse scaler
+    # and create a DataFrame with the predicted values
+    df = pd.DataFrame(y_pred, columns=['Open', 'High', 'Low', 'Close'])  # Add more columns if needed
     print(df.tail())
     
-    return df 
-
-
+    return df
