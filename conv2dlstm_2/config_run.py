@@ -17,8 +17,8 @@ TIME = NOW.strftime("%H:%M")
 #########################
 ###### Run Condition ####
 #########################
-TRAIN_CONDITION = False
-PREDICT_CONDITION = True
+TRAIN_CONDITION = True
+PREDICT_CONDITION = False
 UPDATE_CONDITION = False
 
 
@@ -31,15 +31,15 @@ UPDATE_CONDITION = False
 DATA_SELECTION = {'on_balance_volume': True, 'adx': True, 'accumulation_distribution_indicator': True, 'ewm': {'condition': True, 'lenght': [2,3,5, 7, 9, 10, 15, 20, 30, 35, 40, 45, 50, 75, 130, 150, 200]},
                   'macd': True, 'stochastic_oscillator_indicator': True, 'rsi': True, 'bollinger_bands': True}
 
-START_DATE_FOR_CAPTURING_DATA = '2019-01-01'
-START_DATE_FOR_CAPTURING_DATA = '2023-06-10'
+START_DATE_FOR_CAPTURING_DATA = '2021-01-01'
+START_DATE_FOR_CAPTURING_DATA = '2023-07-28'
 
 #########################
 ####### TRAIN ###########
 #########################
 STOCK_NAME = "TSLA"
-EPOCH_NUM = 1500#4000
-N_STEPS = [1,2,3,4,6,25] #25,30,35,40,45,50,55,60,65,70]#, 9,10,11,12,13,14,15]#[2, 4, 5, 7, 8, 9, 10, 13, 14,15, 16, 18, 19]#[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] #[25, 50, 60, 80, 100, 120, 150, 200, 300, 400, 500] #[1, 2, 3, 4, 5, 10] #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 17, 20]
+EPOCH_NUM = 690#4000
+N_STEPS = [2,3,4, 5,6,10,25, 30] #25,30,35,40,45,50,55,60,65,70]#, 9,10,11,12,13,14,15]#[2, 4, 5, 7, 8, 9, 10, 13, 14,15, 16, 18, 19]#[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] #[25, 50, 60, 80, 100, 120, 150, 200, 300, 400, 500] #[1, 2, 3, 4, 5, 10] #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 17, 20]
 
 
 
@@ -101,7 +101,7 @@ DILATION = 4 #None #3
 KERNEL = 3 #4
 POOL = 2
 PAD = "same" #"same"
-LSTM_LAYER_NEURON_NUMBER = [600, 500, 200] #[800, 1200, 1200, 600, 600, 200] #[600, 600, 600, 300, 300] #[800, 1200, 1200, 600, 600, 200]
+LSTM_LAYER_NEURON_NUMBER = [500, 500, 400, 200] #[800, 1200, 1200, 600, 600, 200] #[600, 600, 600, 300, 300] #[800, 1200, 1200, 600, 600, 200]
 N_LSTM_LAYER = len(LSTM_LAYER_NEURON_NUMBER)
 LSTM_LAYER_DICT = {}
 

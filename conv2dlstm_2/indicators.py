@@ -108,7 +108,7 @@ class INDICATOR:
         stock_data = stock_data.drop(f'ewm{span2}', axis=1)
         return stock_data
 
-
+    '''
     # Calculate the Stochastic Oscillator Indicator (SOI)
     def soi(self, stock_data, span: int = 14):
         stock_data[f'high_{span}'] = stock_data['High'].rolling(span).max()
@@ -121,9 +121,35 @@ class INDICATOR:
         stock_data['d'] = stock_data['d'].fillna(0)
         stock_data = stock_data.fillna(0)
         return stock_data
+    '''
+    def soi(self, stock_data, span: int = 14):
+        stock_data[f'high_{span}'] = stock_data['High'].rolling(span, min_periods=1).max()
+        stock_data[f'low_{span}'] = stock_data['Low'].rolling(span, min_periods=1).min()
+
+        # Safeguard to avoid division by zero
+        denominator = stock_data[f'high_{span}'] - stock_data[f'low_{span}']
+        denominator[denominator == 0] = np.nan  # Replace 0 with NaN to avoid division by zero
+
+        stock_data['k'] = (stock_data['Close'] - stock_data[f'low_{span}']) * 100 / denominator
+        stock_data['d'] = stock_data['k'].rolling(3).mean()
+
+        # Debugging prints
+        print('High:', stock_data[f'high_{span}'])
+        print('Low:', stock_data[f'low_{span}'])
+        print('K:', stock_data['k'])
+        print('D:', stock_data['d'])
+
+        stock_data = stock_data.drop([f'high_{span}', f'low_{span}'], axis=1)
+        stock_data['k'] = stock_data['k'].fillna(0)
+        stock_data['d'] = stock_data['d'].fillna(0)
+        stock_data = stock_data.fillna(0)
+
+        return stock_data
+
 
 
     # Calculate the Relative Strength Index (RSI)
+    '''
     def rsi(self, df, periods=14, ema=True):
         close_delta = df['Close'].diff()
         up = close_delta.clip(lower=0)
@@ -145,13 +171,45 @@ class INDICATOR:
         df = df.dropna()
 
         return df
+    '''
+    def rsi(self, df, periods=14, ema=True):
+        close_delta = df['Close'].diff()
+
+        up = close_delta.clip(lower=0)
+        down = -1 * close_delta.clip(upper=0)
+
+        if ema:
+            # Use exponential moving average
+            ma_up = up.ewm(com=periods - 1, adjust=True, min_periods=1).mean()
+            ma_down = down.ewm(com=periods - 1, adjust=True, min_periods=1).mean()
+        else:
+            # Use simple moving average
+            ma_up = up.rolling(window=periods, min_periods=1).mean()
+            ma_down = down.rolling(window=periods, min_periods=1).mean()
+
+        rs = ma_up / ma_down
+        rsi = 100 - (100 / (1 + rs))
+
+        df['RSI'] = rsi
+
+        # Debugging prints
+        print('Close Delta:', close_delta)
+        print('Up:', up)
+        print('Down:', down)
+        print('MA Up:', ma_up)
+        print('MA Down:', ma_down)
+        print('RS:', rs)
+        print('RSI:', rsi)
+
+        return df
+
 
 
     # Calculate the Simple Moving Average (SMA)
     def get_sma(self, prices, rate):
         return prices.rolling(rate).mean()
 
-
+    '''
     # Calculate Bollinger Bands
     def get_bollinger_bands(self, stock_price, rate=20):
         stock_price_close = stock_price['Close']
@@ -167,3 +225,27 @@ class INDICATOR:
         stock_price = stock_price.dropna()
 
         return stock_price
+    '''
+    def get_bollinger_bands(self, stock_price, rate=5):  # Adjusted rate for demonstration
+        stock_price_close = stock_price['Close']
+        sma = self.get_sma(stock_price_close, rate)
+        std = stock_price_close.rolling(rate, min_periods=1).std()  # Get rolling standard deviation
+
+        bollinger_up = sma + std * 2  # Calculate top band
+        bollinger_down = sma - std * 2  # Calculate bottom band
+
+        stock_price['bollinger_up'] = bollinger_up
+        stock_price['bollinger_down'] = bollinger_down
+
+        # Debugging prints
+        print('SMA:', sma)
+        print('Standard Deviation:', std)
+        print('Bollinger Up:', bollinger_up)
+        print('Bollinger Down:', bollinger_down)
+
+        stock_price = stock_price.dropna()
+
+        return stock_price
+
+
+

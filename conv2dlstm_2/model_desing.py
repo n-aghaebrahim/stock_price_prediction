@@ -18,6 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from datetime import date, timedelta, datetime
 from keras.preprocessing.sequence import TimeseriesGenerator
 from contextlib import redirect_stdout
+from tensorflow.keras.layers import Input, Reshape
 
 # Import custom modules
 from indicators import INDICATOR

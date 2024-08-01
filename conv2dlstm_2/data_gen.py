@@ -29,50 +29,59 @@ def get_data(symbol, date_info, time, train_condition):
     today_date = date.today()
     next_date = today_date + timedelta(days=1)
     start_date = START_DATE_FOR_CAPTURING_DATA
-    stock_data = yf.download(symbol, start=start_date, end=next_date, interval="30m")
+    stock_data = yf.download(symbol, start=start_date, end=next_date, interval="1d")
     values_all = stock_data.values
     values_all_a = np.array(values_all)
-
-
+    print('###### len data is: ', len(stock_data))
     #Calculate the On Balance Volume (OBV)
     if DATA_SELECTION['on_balance_volume']:
         stock_data =  INDICATOR().obv(stock_data=stock_data, span_period=[10,20, 30] )
+        print('After OBV:', stock_data)
 
 
     # Calculate the ADX
     if DATA_SELECTION['adx']:
         stock_data = INDICATOR().get_adx(stock_data = stock_data)
+        print('After ADX:', stock_data)
 
     # The Accumulation/Distribution indicatior
     if DATA_SELECTION['accumulation_distribution_indicator']:
         stock_data = INDICATOR().a_d(stock_data) 
+        print('After AD:', stock_data)
 
     # Generate the ewm coloumns 
     if DATA_SELECTION['ewm']['condition']:
         stock_data = INDICATOR().ewm(stock_data, DATA_SELECTION['ewm']['lenght'])
+        print('After EWM:', stock_data)
 
     # generate the macd coloumns
     if DATA_SELECTION['macd']:
         stock_data = INDICATOR().macd(stock_data) 
+        print('After MACD:', stock_data)
 
     # generate stochastic oscillator indicator
     if DATA_SELECTION['stochastic_oscillator_indicator']:
         stock_data = INDICATOR().soi(stock_data)
+        print('After SOI:', stock_data)
 
     # generate the rsi
     if DATA_SELECTION['rsi']:
         stock_data = INDICATOR().rsi(df=stock_data)
+        print('After RSI:', stock_data)
 
     # calculate the bollinger bands
     if DATA_SELECTION['bollinger_bands']:
         stock_data = INDICATOR().get_bollinger_bands(stock_price=stock_data)
+        print('After Bollinger Bands:', stock_data)
 
+    print('44### test is: ', stock_data)
     # Converting the data frame values to the list
     stock_data_list = stock_data.values.tolist()
-
+    print('### test is: ', stock_data)
     stock_data = stock_data.drop('Adj Close', axis=1)
+    print('### test is: ', stock_data)
     today = str(stock_data.index[-1]).split(' ')[0]
-
+    print('###### len data is: ', len(stock_data))
     # Check to see if it's a training/prediction run
     if train_condition: #not predict_condition:
         # Create the csv_data folder to save the csv data
